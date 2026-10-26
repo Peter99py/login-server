@@ -2,6 +2,8 @@ package database
 
 import (
 	"context"
+	"os"
+	"strings"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -48,11 +50,12 @@ func (acc *Account) VerifyLoginSecondFactor(ctx context.Context, db *sql.DB, tok
 		ctx = context.Background()
 	}
 
+	if strings.EqualFold(strings.TrimSpace(os.Getenv("AUTHENTICATOR_ENABLED")), "false") {
+		return verification, nil
+	}
+
 	entry, err := loadAccountAuthenticator(ctx, db, acc.ID)
 	if errors.Is(err, sql.ErrNoRows) {
-		if acc.IsAdmin() {
-			return verification, serviceerrors.StaffAuthenticatorRequired()
-		}
 		return verification, nil
 	}
 	if err != nil {

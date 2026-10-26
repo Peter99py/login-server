@@ -2,6 +2,8 @@ package grpc_login_server
 
 import (
 	"database/sql"
+	"os"
+	"strings"
 	"fmt"
 	"net"
 
@@ -30,8 +32,10 @@ func Initialize(gConfigs configs.GlobalConfigs) *GrpcServer {
 }
 
 func (ls *GrpcServer) Run(gConfigs configs.GlobalConfigs) error {
-	if _, err := authenticator.DecodeEncryptionKey(ls.AuthenticatorEncryptionKey); err != nil {
-		return fmt.Errorf("invalid authenticator configuration: %w", err)
+	if !strings.EqualFold(strings.TrimSpace(os.Getenv("AUTHENTICATOR_ENABLED")), "false") {
+		if _, err := authenticator.DecodeEncryptionKey(ls.AuthenticatorEncryptionKey); err != nil {
+			return fmt.Errorf("invalid authenticator configuration: %w", err)
+		}
 	}
 
 	c, err := net.Listen("tcp", gConfigs.LoginServerConfigs.Grpc.Format())
